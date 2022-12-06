@@ -1,0 +1,2 @@
+execve("./hello", ["./hello"], 0x7ffc7b96d010 /* 9 vars */) = -1 ENOEXEC (Exec format error)
++++ exited with 1 +++
