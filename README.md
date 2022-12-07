@@ -136,6 +136,18 @@ Key to Flags:
 
 ```
 
+pause プログラムを実行するのに必要な情報
+
+| 名前                                              | 値       |
+| ------------------------------------------------- | -------- |
+| コードのファイル内オフセット (.text, Offset)      | 0x1050   |
+| コードのサイズ (.text, Size)                      | 0xfa     |
+| コードのメモリマップ開始アドレス (.text, Address) | 0x401050 |
+| データのファイル内オフセット (.data, Offset)      | 0x3020   |
+| データのサイズ (.data, Size)                      | 0x10     |
+| データのメモリマップ開始アドレス (.data, Address) | 0x404020 |
+| エントリポイント                                  | 0x401050 |
+
 メモリマップ
 
 ```bash
@@ -167,3 +179,86 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 ```
 
 ### プロセスの親子関係
+
+プロセスの親子関係
+
+```bash
+root@8314006d192b:/# pstree -p
+bash(1)
+```
+
+### プロセスの状態
+
+START: プロセスが起動した時間
+TIME: 使った CPU 時間の合計
+STAT: 一文字目が S のプロセスはスリープ状態
+
+```bash
+root@8314006d192b:/# ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.0   4624  3660 pts/0    Ss+  13:19   0:00 bash
+root         9  0.0  0.0   4624  3716 pts/1    Ss   13:20   0:00 bash
+root        22  0.0  0.0   7060  1548 pts/1    R+   13:21   0:00 ps aux
+```
+
+プロセスが CPU を使いたい状態 -> 実行可能状態
+プロセスが CPU を使っている状態 -> 実行状態
+プロセスが終了している状態 -> ゾンビ状態
+
+### プロセスの終了
+
+- プロセスを終了させるには exit_group()というシステムコールを呼ぶ
+- exit_group()関数の中で、カーネルはメモリなどのプロセスのリソースを回収する
+
+### シグナル
+
+- シグナルとは、あるプロセスが他のプロセスに何かを通知して、外部から実行の流れを強制的に変えるための仕組み
+- プロセスは各シグナルについて、シグナルハンドラという処理をあらかじめ登録しておける
+
+シグナルハンドラで無視するコード
+
+```python
+#!/usr/bin/python3
+
+import signal
+
+signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+while True:
+	pass
+```
+
+### シェルのジョブ管理の実現
+
+- ジョブはシェルがバックグラウンドで実行したプロセスを制御するための仕組み
+
+```bash
+root@8314006d192b:/home/src/process_management_basic# sleep infinity &
+[1] 37 # [1]がジョブの番号
+root@8314006d192b:/home/src/process_management_basic# sleep infinity &
+[2] 38
+root@8314006d192b:/home/src/process_management_basic# jobs
+[1]-  Running                 sleep infinity &
+[2]+  Running                 sleep infinity &
+root@8314006d192b:/home/src/process_management_basic# fg 1
+sleep infinity
+^Z
+[1]+  Stopped                 sleep infinity
+```
+
+- セッションはユーザがシステムにログインした時のログインセッションに対応するもの
+- セッションにはセッション ID、SID と呼ばれる一意な値が割り振られている
+- TTY というフィールドが端末の名前
+
+```bash
+root@8314006d192b:/home/src/process_management_basic# ps ajx
+ PPID   PID  PGID   SID TTY      TPGID STAT   UID   TIME COMMAND
+    0     1     1     1 pts/0        1 Ss+      0   0:00 bash
+    0     9     9     9 pts/1       43 Ss       0   0:00 bash
+    9    43    43     9 pts/1       43 R+       0   0:00 ps ajx
+```
+
+- プロセスグループは、複数のプロセスをまとめたコントロールするためのもの
+- セッションの中に複数のプロセスグループが存在する
+
+### デーモン
