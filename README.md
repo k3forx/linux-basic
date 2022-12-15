@@ -554,3 +554,18 @@ hello
 ## コンテナ
 
 ### 仮想マシンとの違い
+
+### namespace
+
+- namespace は、システムに存在する様々な種類のリソースについて存在し、所属するプロセスに、見かけ上は独立したリソースを見せる機能
+  - pid namespace (pid ns): 独立 pid 名前空間を見せる
+  - user namespace (user ns): 独立した uid, gid を見せる
+  - mound namespace (mount ns): 独立したファイルシステムマウント状況を見せる
+
+#### pid namespace
+
+- システム起動時には、すべてのプロセスが所属する「root pid ns」というものが存在する
+
+## cgroup
+
+- cgroup は、システムのメモリや CPU などのリソースをどのプロセスにどれだけ与えるかという細かい制御をするための機能
